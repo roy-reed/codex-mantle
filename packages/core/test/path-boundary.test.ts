@@ -1,6 +1,6 @@
-import { mkdir, mkdtemp, rm, symlink, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, realpath, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { join, resolve } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import {
   PathBoundary,
@@ -13,7 +13,7 @@ import {
 const temporaryRoots: string[] = [];
 
 async function temporaryRoot(): Promise<string> {
-  const root = await mkdtemp(join(tmpdir(), "codex-mantle-core-"));
+  const root = await realpath(await mkdtemp(join(tmpdir(), "codex-mantle-core-")));
   temporaryRoots.push(root);
   return root;
 }
@@ -25,11 +25,23 @@ afterEach(async () => {
 });
 
 describe("directory resolution", () => {
-  it("uses explicit absolute overrides", () => {
+  it("uses platform-aware state paths and host-native Codex paths", () => {
     expect(resolveStateDir({ CODEX_MANTLE_HOME: "C:\\state" }, "win32", "C:\\Users\\<user>")).toBe(
       "C:\\state",
     );
-    expect(resolveCodexHome({ CODEX_HOME: "C:\\codex" }, "C:\\Users\\<user>")).toBe("C:\\codex");
+    expect(
+      resolveStateDir(
+        { LOCALAPPDATA: "C:\\Users\\<user>\\AppData\\Local" },
+        "win32",
+        "C:\\Users\\<user>",
+      ),
+    ).toBe("C:\\Users\\<user>\\AppData\\Local\\CodexMantle");
+    expect(resolveStateDir({ XDG_STATE_HOME: "/var/lib/user-state" }, "linux", "/home/user")).toBe(
+      "/var/lib/user-state/codex-mantle",
+    );
+
+    const hostCodexHome = resolve(tmpdir(), "codex-mantle-codex-home");
+    expect(resolveCodexHome({ CODEX_HOME: hostCodexHome })).toBe(hostCodexHome);
   });
 
   it("rejects relative overrides", () => {

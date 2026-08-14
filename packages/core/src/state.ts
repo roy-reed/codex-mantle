@@ -1,5 +1,5 @@
 import { homedir, platform } from "node:os";
-import { isAbsolute, resolve } from "node:path";
+import { isAbsolute, posix, resolve, win32 } from "node:path";
 
 export interface DirectoryEnvironment {
   readonly CODEX_HOME?: string;
@@ -8,16 +8,27 @@ export interface DirectoryEnvironment {
   readonly XDG_STATE_HOME?: string;
 }
 
-function absoluteOverride(value: string | undefined, name: string): string | undefined {
+interface PathOperations {
+  isAbsolute(path: string): boolean;
+  resolve(...paths: string[]): string;
+}
+
+const hostPath: PathOperations = { isAbsolute, resolve };
+
+function absoluteOverride(
+  value: string | undefined,
+  name: string,
+  pathOperations: PathOperations = hostPath,
+): string | undefined {
   if (value === undefined || value.trim() === "") {
     return undefined;
   }
 
-  if (!isAbsolute(value)) {
+  if (!pathOperations.isAbsolute(value)) {
     throw new Error(`${name} must be an absolute path`);
   }
 
-  return resolve(value);
+  return pathOperations.resolve(value);
 }
 
 export function resolveStateDir(
@@ -25,23 +36,32 @@ export function resolveStateDir(
   currentPlatform: NodeJS.Platform = platform(),
   userHome: string = homedir(),
 ): string {
-  const override = absoluteOverride(environment.CODEX_MANTLE_HOME, "CODEX_MANTLE_HOME");
+  const pathOperations = currentPlatform === "win32" ? win32 : posix;
+  const override = absoluteOverride(
+    environment.CODEX_MANTLE_HOME,
+    "CODEX_MANTLE_HOME",
+    pathOperations,
+  );
   if (override !== undefined) {
     return override;
   }
 
   if (currentPlatform === "win32") {
-    const localAppData = absoluteOverride(environment.LOCALAPPDATA, "LOCALAPPDATA");
+    const localAppData = absoluteOverride(environment.LOCALAPPDATA, "LOCALAPPDATA", pathOperations);
     if (localAppData === undefined) {
       throw new Error("LOCALAPPDATA is required on Windows when CODEX_MANTLE_HOME is unset");
     }
-    return resolve(localAppData, "CodexMantle");
+    return pathOperations.resolve(localAppData, "CodexMantle");
   }
 
-  const xdgStateHome = absoluteOverride(environment.XDG_STATE_HOME, "XDG_STATE_HOME");
+  const xdgStateHome = absoluteOverride(
+    environment.XDG_STATE_HOME,
+    "XDG_STATE_HOME",
+    pathOperations,
+  );
   return xdgStateHome === undefined
-    ? resolve(userHome, ".local", "state", "codex-mantle")
-    : resolve(xdgStateHome, "codex-mantle");
+    ? pathOperations.resolve(userHome, ".local", "state", "codex-mantle")
+    : pathOperations.resolve(xdgStateHome, "codex-mantle");
 }
 
 export function resolveCodexHome(

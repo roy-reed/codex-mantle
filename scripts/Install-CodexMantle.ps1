@@ -102,21 +102,32 @@ function Assert-OwnershipMarker {
     throw "Install ownership marker is invalid: $MarkerPath"
 }
 
-function Assert-Toolchain {
-    $nodeCommand = Get-Command node -ErrorAction Stop
-    $pnpmCommand = Get-Command pnpm -ErrorAction Stop
+function Resolve-ApplicationPath {
+    param([Parameter(Mandatory)][string]$Name)
 
-    $nodeVersion = (& $nodeCommand.Source --version 2>&1 | Out-String).Trim()
+    $command = Get-Command $Name -CommandType Application -ErrorAction Stop |
+        Select-Object -First 1
+    if ($null -eq $command -or [string]::IsNullOrWhiteSpace([string]$command.Source)) {
+        throw "Required application was not found: $Name"
+    }
+    return [string]$command.Source
+}
+
+function Assert-Toolchain {
+    $nodePath = Resolve-ApplicationPath -Name 'node'
+    $pnpmPath = Resolve-ApplicationPath -Name 'pnpm'
+
+    $nodeVersion = (& $nodePath --version 2>&1 | Out-String).Trim()
     if ($LASTEXITCODE -ne 0 -or $nodeVersion -notmatch '^v?(?<major>\d+)(?:\.|$)' -or [int]$Matches.major -lt 22) {
         throw "Node.js 22 or later is required; reported version: $nodeVersion"
     }
 
-    $pnpmVersion = (& $pnpmCommand.Source --version 2>&1 | Out-String).Trim()
+    $pnpmVersion = (& $pnpmPath --version 2>&1 | Out-String).Trim()
     if ($LASTEXITCODE -ne 0 -or $pnpmVersion -notmatch '^(?<major>\d+)(?:\.|$)' -or [int]$Matches.major -ne 11) {
         throw "pnpm major version 11 is required; reported version: $pnpmVersion"
     }
 
-    return [ordered]@{ Node = $nodeCommand.Source; Pnpm = $pnpmCommand.Source }
+    return [ordered]@{ Node = $nodePath; Pnpm = $pnpmPath }
 }
 
 function Test-RepositoryDependenciesReady {

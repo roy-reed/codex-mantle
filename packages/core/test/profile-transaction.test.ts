@@ -1,4 +1,4 @@
-import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, realpath, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -19,7 +19,7 @@ const temporaryRoots: string[] = [];
 vi.setConfig({ hookTimeout: 15_000, testTimeout: 15_000 });
 
 async function temporaryRoot(): Promise<string> {
-  const root = await mkdtemp(join(tmpdir(), "codex-mantle-profile-"));
+  const root = await realpath(await mkdtemp(join(tmpdir(), "codex-mantle-profile-")));
   temporaryRoots.push(root);
   return root;
 }

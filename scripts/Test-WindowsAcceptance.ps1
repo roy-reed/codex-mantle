@@ -24,6 +24,17 @@ function Assert-Condition {
     if (-not $Condition) { throw $Message }
 }
 
+function Resolve-ApplicationPath {
+    param([Parameter(Mandatory)][string]$Name)
+
+    $command = Get-Command $Name -CommandType Application -ErrorAction Stop |
+        Select-Object -First 1
+    if ($null -eq $command -or [string]::IsNullOrWhiteSpace([string]$command.Source)) {
+        throw "Required application was not found: $Name"
+    }
+    return [string]$command.Source
+}
+
 function Get-NormalizedPath {
     param([Parameter(Mandatory)][string]$Path)
 
@@ -264,7 +275,7 @@ try {
     Assert-Condition -Condition (-not (Test-Path -LiteralPath (Join-Path $sourceRoot 'node_modules'))) -Message 'Acceptance source unexpectedly contains root dependencies.'
     Assert-Condition -Condition (-not (Test-Path -LiteralPath (Join-Path $sourceRoot '.git'))) -Message 'Acceptance source unexpectedly contains Git metadata.'
 
-    $nodePath = (Get-Command node -CommandType Application -ErrorAction Stop).Source
+    $nodePath = Resolve-ApplicationPath -Name 'node'
     & $nodePath (Join-Path $sourceRoot 'scripts\\scan-repository.mjs')
     Assert-Condition -Condition ($LASTEXITCODE -eq 0) -Message 'Repository heuristic scan failed in the archive-equivalent source.'
 
