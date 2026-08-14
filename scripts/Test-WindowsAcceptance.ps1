@@ -189,7 +189,7 @@ function Receive-TestServerOutput {
         [ValidateRange(1, 30000)][int]$TimeoutMilliseconds = 5000
     )
 
-    $tasks = @($StdoutTask, $StderrTask) | Where-Object { $null -ne $_ }
+    $tasks = @(@($StdoutTask, $StderrTask) | Where-Object { $null -ne $_ })
     $diagnostics = [Collections.Generic.List[string]]::new()
     if ($tasks.Count -gt 0) {
         try {
