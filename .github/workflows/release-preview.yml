@@ -1,0 +1,117 @@
+name: Preview release
+
+on:
+  push:
+    tags: ["v*-alpha.*"]
+
+permissions:
+  contents: read
+
+jobs:
+  metadata:
+    runs-on: ubuntu-latest
+    outputs:
+      tag_commit: ${{ steps.tag_commit.outputs.commit }}
+    env:
+      EXPECTED_TAG: ${{ github.ref_name }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22
+      - name: Require the tagged commit to be on main
+        id: tag_commit
+        env:
+          EVENT_SHA: ${{ github.sha }}
+        run: |
+          git fetch --no-tags origin main:refs/remotes/origin/main
+          TAG_COMMIT="$(git rev-parse "$EVENT_SHA^{commit}")"
+          test "$(git rev-parse HEAD)" = "$TAG_COMMIT"
+          node scripts/check-version-consistency.mjs --release --expected-commit "$TAG_COMMIT"
+          node -e "const p=require('./package.json'); if (process.env.EXPECTED_TAG !== 'v'+p.version) { console.error('Expected tag v'+p.version+', received '+process.env.EXPECTED_TAG); process.exit(1) }"
+          git merge-base --is-ancestor "$TAG_COMMIT" origin/main
+          echo "commit=$TAG_COMMIT" >> "$GITHUB_OUTPUT"
+
+  windows-acceptance:
+    needs: metadata
+    runs-on: windows-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
+        with:
+          version: 11.19.0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22
+      - name: Exercise release-archive install, health, and uninstall
+        shell: pwsh
+        run: ./scripts/Test-WindowsAcceptance.ps1 -Fast -SourceMode GitArchive
+
+  source:
+    needs: windows-acceptance
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
+        with:
+          version: 11.19.0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm check
+      - run: pnpm license:inventory
+      - run: git archive --format=zip --output=artifacts/codex-mantle-source.zip HEAD
+      - run: cd artifacts && sha256sum codex-mantle-source.zip licenses.json > SHA256SUMS
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: release-assets
+          path: |
+            artifacts/codex-mantle-source.zip
+            artifacts/licenses.json
+            artifacts/SHA256SUMS
+          if-no-files-found: error
+
+  release:
+    needs: [metadata, source]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      EXPECTED_COMMIT: ${{ needs.metadata.outputs.tag_commit }}
+      EXPECTED_TAG: ${{ github.ref_name }}
+    steps:
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: release-assets
+          path: artifacts
+      - name: Verify downloaded release assets
+        working-directory: artifacts
+        run: sha256sum -c SHA256SUMS
+      - name: Revalidate tag target immediately before publication
+        run: |
+          REMOTE_REFS="$(git ls-remote "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY.git" "refs/tags/$EXPECTED_TAG" "refs/tags/$EXPECTED_TAG^{}")"
+          DIRECT_COMMIT="$(printf '%s\n' "$REMOTE_REFS" | awk -v ref="refs/tags/$EXPECTED_TAG" '$2 == ref { print $1 }')"
+          PEELED_COMMIT="$(printf '%s\n' "$REMOTE_REFS" | awk -v ref="refs/tags/$EXPECTED_TAG^{}" '$2 == ref { print $1 }')"
+          REMOTE_COMMIT="${PEELED_COMMIT:-$DIRECT_COMMIT}"
+          test -n "$REMOTE_COMMIT"
+          test "$REMOTE_COMMIT" = "$EXPECTED_COMMIT"
+      - uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2
+        with:
+          prerelease: true
+          generate_release_notes: true
+          files: |
+            artifacts/codex-mantle-source.zip
+            artifacts/licenses.json
+            artifacts/SHA256SUMS

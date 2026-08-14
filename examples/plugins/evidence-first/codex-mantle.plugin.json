@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "id": "evidence-first",
+  "name": "Evidence First",
+  "version": "0.1.0",
+  "description": "A data-only example that adds a bounded, evidence-first workspace profile.",
+  "license": "Apache-2.0",
+  "compatibility": {
+    "mantle": "^0.1.0",
+    "codexSeries": ["0.147"]
+  },
+  "contributions": {
+    "profiles": [
+      {
+        "id": "default",
+        "title": "Evidence-first workspace profile",
+        "description": "Requires explicit evidence and scoped verification for repository changes.",
+        "files": [
+          {
+            "source": "profiles/default/AGENTS.md",
+            "target": {
+              "scope": "workspace",
+              "path": "AGENTS.md"
+            },
+            "strategy": "managed-block",
+            "marker": "evidence-first"
+          }
+        ]
+      }
+    ]
+  }
+}

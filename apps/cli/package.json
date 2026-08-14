@@ -1,0 +1,33 @@
+{
+  "name": "@codex-mantle/cli",
+  "version": "0.1.0-alpha.1",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "codex-mantle": "dist/cli.js"
+  },
+  "exports": {
+    ".": "./dist/cli.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "clean": "node -e \"require('node:fs').rmSync('dist',{recursive:true,force:true})\"",
+    "dev": "node --import tsx src/cli.ts",
+    "start": "node dist/cli.js",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@codex-mantle/codex-adapter": "workspace:*",
+    "@codex-mantle/core": "workspace:*",
+    "@codex-mantle/plugin-sdk": "workspace:*",
+    "@codex-mantle/server": "workspace:*",
+    "commander": "^14.0.0",
+    "open": "^10.2.0"
+  },
+  "devDependencies": {
+    "tsx": "^4.20.5"
+  }
+}

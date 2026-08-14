@@ -1,0 +1,32 @@
+name: Feature proposal
+description: Propose an extension that preserves Mantle's local-first safety boundary.
+title: "[Feature]: "
+labels: [enhancement, triage]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: Describe the user outcome, not only the proposed implementation.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed behavior
+    validations:
+      required: true
+  - type: textarea
+    id: boundaries
+    attributes:
+      label: Security and compatibility boundaries
+      description: Note writes, credentials, network access, Codex-version assumptions, and rollback behavior.
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance evidence
+      description: List target, regression, edge, and failure cases.
+    validations:
+      required: true

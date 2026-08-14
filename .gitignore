@@ -1,0 +1,33 @@
+node_modules/
+dist/
+coverage/
+.cache/
+.turbo/
+.vite/
+
+# Local Mantle state and task contracts
+.codex-mantle/
+.codex-task-*.json
+*.log
+
+# Credentials and local overrides
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+*.p12
+*.pfx
+*.token
+secrets/
+
+# IDE and OS files
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Build archives
+artifacts/
+*.tgz
+*.zip

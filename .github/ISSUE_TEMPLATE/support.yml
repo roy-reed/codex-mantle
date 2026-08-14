@@ -1,0 +1,31 @@
+name: Support question
+description: Ask a bounded usage or installation question without sharing private data.
+title: "[Support]: "
+labels: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Run `codex-mantle doctor --json` first. Redact private paths, workspace content, instructions, schemas, and credentials before pasting output.
+  - type: input
+    id: versions
+    attributes:
+      label: Versions
+      description: Include Codex Mantle, Codex CLI, operating system, Node.js, and PowerShell versions as applicable.
+      placeholder: Codex Mantle 0.1.0-alpha.1; Codex CLI 0.x; Windows 11; Node.js 22; PowerShell 7
+    validations:
+      required: true
+  - type: textarea
+    id: question
+    attributes:
+      label: Question
+      description: Describe the goal, command, observed behavior, and the smallest non-sensitive example.
+    validations:
+      required: true
+  - type: checkboxes
+    id: privacy
+    attributes:
+      label: Privacy check
+      options:
+        - label: I removed credentials, private instructions, generated schemas, and real workspace content.
+          required: true

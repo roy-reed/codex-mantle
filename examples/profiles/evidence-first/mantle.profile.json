@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "id": "evidence-first",
+  "name": "Evidence-first workspace guidance",
+  "version": "0.1.0",
+  "description": "A small example that manages one named block in a workspace AGENTS.md file.",
+  "files": [
+    {
+      "blockId": "evidence-first",
+      "path": "AGENTS.md",
+      "strategy": "managed-block",
+      "target": "workspace",
+      "source": "payloads/AGENTS.block.md"
+    }
+  ]
+}
