@@ -473,3 +473,7 @@ finally {
         }
     }
 }
+
+# The doctor probe intentionally returns 1 for the incompatible Node.js stand-in.
+# Normalize that expected native exit code only after every acceptance assertion passed.
+if ($passed) { $global:LASTEXITCODE = 0 }
