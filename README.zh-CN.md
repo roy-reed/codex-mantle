@@ -81,6 +81,8 @@ pwsh -File .\scripts\Install-CodexMantle.ps1
 更多内容见[架构](docs/ARCHITECTURE.md)、[兼容性](docs/COMPATIBILITY.md)和
 [路线图](docs/ROADMAP.md)。
 
+维护者的日常检查、跨平台约定和发布前清单见[维护者指南](docs/MAINTAINER_GUIDE.zh-CN.md)。
+
 ## 当前边界
 
 v0.1 是可长期演进的薄层，不是另一个完整 Codex 客户端。它不代理模型流量、不保存供应商密钥、
