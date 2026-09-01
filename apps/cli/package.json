@@ -25,7 +25,7 @@
     "@codex-mantle/plugin-sdk": "workspace:*",
     "@codex-mantle/server": "workspace:*",
     "commander": "^14.0.0",
-    "open": "^10.2.0"
+    "open": "^11.0.0"
   },
   "devDependencies": {
     "tsx": "^4.20.5"
