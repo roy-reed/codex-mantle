@@ -6,15 +6,15 @@
 
 | 平台 | 最低工具 | 说明 |
 | --- | --- | --- |
-| Windows | Node.js 22.12、PowerShell 7、Git、pnpm 11 | 安装器和 Windows 验收脚本使用 PowerShell |
-| Linux | Node.js 22.12、Git、pnpm 11 | 核心包与 CLI 可在无桌面环境检查 |
-| macOS | Node.js 22.12、Git、pnpm 11 | 使用 POSIX 路径，不依赖盘符 |
+| Windows | Node.js 22.12、PowerShell 7、Git、pnpm 10 | 安装器和 Windows 验收脚本使用 PowerShell |
+| Linux | Node.js 22.12、Git、pnpm 10 | 核心包与 CLI 可在无桌面环境检查 |
+| macOS | Node.js 22.12、Git、pnpm 10 | 使用 POSIX 路径，不依赖盘符 |
 
-优先使用仓库声明的 `pnpm@11.19.0`。如果 Corepack 因缓存位于不同磁盘或权限策略无法启用 pnpm，可以用一次性方式运行同一版本，不需要修改全局 Node 环境：
+优先使用仓库声明的 `pnpm@10.34.5`。如果 Corepack 因缓存位于不同磁盘或权限策略无法启用 pnpm，可以用一次性方式运行同一版本，不需要修改全局 Node 环境：
 
 ```powershell
-npm exec --yes --package=pnpm@11.19.0 -- pnpm install --frozen-lockfile
-npm exec --yes --package=pnpm@11.19.0 -- pnpm check
+npm exec --yes --package=pnpm@10.34.5 -- pnpm install --frozen-lockfile
+npm exec --yes --package=pnpm@10.34.5 -- pnpm check
 ```
 
 ## 日常工作流

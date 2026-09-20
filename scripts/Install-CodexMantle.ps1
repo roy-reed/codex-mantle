@@ -118,13 +118,14 @@ function Assert-Toolchain {
     $pnpmPath = Resolve-ApplicationPath -Name 'pnpm'
 
     $nodeVersion = (& $nodePath --version 2>&1 | Out-String).Trim()
-    if ($LASTEXITCODE -ne 0 -or $nodeVersion -notmatch '^v?(?<major>\d+)(?:\.|$)' -or [int]$Matches.major -lt 22) {
-        throw "Node.js 22 or later is required; reported version: $nodeVersion"
+    if ($LASTEXITCODE -ne 0 -or $nodeVersion -notmatch '^v?(?<major>\d+)\.(?<minor>\d+)(?:\.|$)' -or
+        [int]$Matches.major -lt 22 -or ([int]$Matches.major -eq 22 -and [int]$Matches.minor -lt 12)) {
+        throw "Node.js 22.12 or later is required; reported version: $nodeVersion"
     }
 
     $pnpmVersion = (& $pnpmPath --version 2>&1 | Out-String).Trim()
-    if ($LASTEXITCODE -ne 0 -or $pnpmVersion -notmatch '^(?<major>\d+)(?:\.|$)' -or [int]$Matches.major -ne 11) {
-        throw "pnpm major version 11 is required; reported version: $pnpmVersion"
+    if ($LASTEXITCODE -ne 0 -or $pnpmVersion -notmatch '^(?<major>\d+)(?:\.|$)' -or [int]$Matches.major -ne 10) {
+        throw "pnpm major version 10 is required; reported version: $pnpmVersion"
     }
 
     return [ordered]@{ Node = $nodePath; Pnpm = $pnpmPath }
