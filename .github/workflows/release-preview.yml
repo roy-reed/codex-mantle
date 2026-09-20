@@ -21,7 +21,7 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
-          node-version: 22
+          node-version: 22.12.0
       - name: Require the tagged commit to be on main
         id: tag_commit
         env:
@@ -49,7 +49,7 @@ jobs:
           version: 11.19.0
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
-          node-version: 22
+          node-version: 22.12.0
       - name: Exercise release-archive install, health, and uninstall
         shell: pwsh
         run: ./scripts/Test-WindowsAcceptance.ps1 -Fast -SourceMode GitArchive
@@ -67,7 +67,7 @@ jobs:
           version: 11.19.0
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
-          node-version: 22
+          node-version: 22.12.0
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm check
