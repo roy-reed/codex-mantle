@@ -5,7 +5,7 @@ Preview releases are created only by pushing an alpha tag that exactly matches t
 ## Before tagging
 
 1. Confirm the worktree contains only intended release changes and no credentials, local state, generated archives, or private paths.
-2. Run `pnpm install --frozen-lockfile` with Node.js 22 or later and the pinned pnpm 11.x version.
+2. Run `pnpm install --frozen-lockfile` with Node.js 22.12 or later and the pinned pnpm 10.x version.
 3. Run `pnpm version:check` and `pnpm check`.
 4. On Windows PowerShell 7, run `pwsh -NoProfile -File .\scripts\Test-WindowsAcceptance.ps1 -SourceMode GitArchive` against the release commit and record that exact gate in the attestation.
 5. Run `pwsh -NoProfile -File .\scripts\Test-ProfileAcceptance.ps1` with a real allowlisted Codex CLI and add the sanitized result under [attestations](./attestations/README.md).

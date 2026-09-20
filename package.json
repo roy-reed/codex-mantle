@@ -5,9 +5,9 @@
   "description": "A local-first, reversible control layer for OpenAI Codex configuration and extensions.",
   "license": "Apache-2.0",
   "type": "module",
-  "packageManager": "pnpm@11.19.0",
+  "packageManager": "pnpm@10.34.5",
   "engines": {
-    "node": ">=22"
+    "node": ">=22.12.0"
   },
   "scripts": {
     "acceptance:profile": "pnpm build && pwsh -NoProfile -File ./scripts/Test-ProfileAcceptance.ps1",
@@ -28,7 +28,7 @@
   },
   "devDependencies": {
     "@biomejs/biome": "^2.2.0",
-    "@types/node": "^24.0.0",
+    "@types/node": "^24.13.6",
     "@vitest/coverage-v8": "^3.2.4",
     "typescript": "^5.9.2",
     "vitest": "^3.2.4"

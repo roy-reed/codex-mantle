@@ -118,13 +118,14 @@ function Assert-Toolchain {
     $pnpmPath = Resolve-ApplicationPath -Name 'pnpm'
 
     $nodeVersion = (& $nodePath --version 2>&1 | Out-String).Trim()
-    if ($LASTEXITCODE -ne 0 -or $nodeVersion -notmatch '^v?(?<major>\d+)(?:\.|$)' -or [int]$Matches.major -lt 22) {
-        throw "Node.js 22 or later is required; reported version: $nodeVersion"
+    if ($LASTEXITCODE -ne 0 -or $nodeVersion -notmatch '^v?(?<major>\d+)\.(?<minor>\d+)(?:\.|$)' -or
+        [int]$Matches.major -lt 22 -or ([int]$Matches.major -eq 22 -and [int]$Matches.minor -lt 12)) {
+        throw "Node.js 22.12 or later is required; reported version: $nodeVersion"
     }
 
     $pnpmVersion = (& $pnpmPath --version 2>&1 | Out-String).Trim()
-    if ($LASTEXITCODE -ne 0 -or $pnpmVersion -notmatch '^(?<major>\d+)(?:\.|$)' -or [int]$Matches.major -ne 11) {
-        throw "pnpm major version 11 is required; reported version: $pnpmVersion"
+    if ($LASTEXITCODE -ne 0 -or $pnpmVersion -notmatch '^(?<major>\d+)(?:\.|$)' -or [int]$Matches.major -ne 10) {
+        throw "pnpm major version 10 is required; reported version: $pnpmVersion"
     }
 
     return [ordered]@{ Node = $nodePath; Pnpm = $pnpmPath }
@@ -197,7 +198,6 @@ $timestamp = [DateTime]::UtcNow.ToString('yyyyMMddTHHmmssfffZ')
 $versionsRoot = Join-Path $installRootFull 'versions'
 $binRoot = Join-Path $installRootFull 'bin'
 $finalRoot = Join-Path $versionsRoot "$version-$timestamp-$PID"
-$stagingRoot = Join-Path $installRootFull ".staging-$PID-$timestamp"
 $marker = Join-Path $installRootFull '.codex-mantle-install.json'
 $launcher = Join-Path $binRoot 'codex-mantle.cmd'
 $powerShellLauncher = Join-Path $binRoot 'codex-mantle.ps1'
@@ -262,17 +262,19 @@ try {
     $null = Assert-NoReparseTraversal -Path $versionsRoot
     $null = Assert-NoReparseTraversal -Path $binRoot
 
-    & $pnpmPath --filter '@codex-mantle/cli' deploy --prod $stagingRoot
+    # pnpm 10 creates absolute workspace-package links inside a deployed tree.
+    # Deploy directly to the unique version directory so those links remain
+    # valid; the directory is not made active until both launchers are replaced.
+    $createdFinalRoot = $true
+    & $pnpmPath --filter '@codex-mantle/cli' deploy --prod $finalRoot
     if ($LASTEXITCODE -ne 0) { throw "pnpm deploy failed with exit code $LASTEXITCODE." }
 
     $webSource = Join-Path $repositoryRoot 'apps\web\dist'
     if (-not (Test-Path -LiteralPath $webSource -PathType Container)) {
         throw "Built dashboard is missing: $webSource"
     }
-    $webDestination = Join-Path $stagingRoot 'web'
+    $webDestination = Join-Path $finalRoot 'web'
     Copy-Item -LiteralPath $webSource -Destination $webDestination -Recurse
-    Move-Item -LiteralPath $stagingRoot -Destination $finalRoot
-    $createdFinalRoot = $true
 
     $backupRoot = Join-Path $installRootFull 'launcher-backups'
     $null = New-Item -ItemType Directory -Path $backupRoot -Force
@@ -358,13 +360,6 @@ catch {
         }
         catch { $cleanupErrors.Add("Launcher backup cleanup failed for $($state.Backup): $($_.Exception.Message)") }
     }
-
-    try {
-        if (Test-Path -LiteralPath $stagingRoot) {
-            Remove-InstallChild -Path $stagingRoot -ExpectedParent $installRootFull -Label 'staging cleanup'
-        }
-    }
-    catch { $cleanupErrors.Add($_.Exception.Message) }
 
     try {
         if ($createdFinalRoot -and (Test-Path -LiteralPath $finalRoot)) {

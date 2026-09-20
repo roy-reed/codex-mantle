@@ -45,7 +45,7 @@ task dispatchers, but it does not require API keys or send workspace content to 
 
 ## Quick start from source
 
-Requirements: Node.js 22+, pnpm 11.x (verified with 11.19.0), Git, and PowerShell 7 on Windows.
+Requirements: Node.js 22.12+, pnpm 10.x (verified with 10.34.5), Git, and PowerShell 7 on Windows.
 
 ```bash
 git clone https://github.com/roy-reed/codex-mantle.git

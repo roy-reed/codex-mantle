@@ -24,7 +24,7 @@
     "@codex-mantle/core": "workspace:*",
     "@codex-mantle/plugin-sdk": "workspace:*",
     "@codex-mantle/server": "workspace:*",
-    "commander": "^14.0.0",
+    "commander": "^15.0.0",
     "open": "^10.2.0"
   },
   "devDependencies": {

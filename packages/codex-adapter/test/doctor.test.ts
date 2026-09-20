@@ -22,6 +22,43 @@ function result(
 }
 
 describe("runDoctor", () => {
+  it.each([
+    ["v22.11.0", "error"],
+    ["v22.12.0", "ok"],
+  ] as const)("enforces the Node.js 22.12 minimum for %s", async (nodeVersion, status) => {
+    const runner: ProcessRunner = async (command, args) => {
+      if (args[0] === "--version" && command === "node") {
+        return result(command, args, nodeVersion);
+      }
+      if (args[0] === "--version" && command === "codex") {
+        return result(command, args, "codex-cli 0.147.0-alpha.1.2");
+      }
+      if (args.includes("generate-json-schema")) {
+        return result(
+          command,
+          args,
+          "Usage: codex app-server generate-json-schema [OPTIONS] --out <DIR>",
+        );
+      }
+      if (args[0] === "app-server") {
+        return result(command, args, "Usage: codex app-server [OPTIONS]\ngenerate-json-schema");
+      }
+      if (args[0] === "--help") {
+        return result(command, args, "Usage: codex [OPTIONS]\napp-server");
+      }
+      if (command === "pwsh") return result(command, args, "7.5.0");
+      return result(command, args, "version 9.0.0");
+    };
+
+    const report = await runDoctor({
+      runner,
+      platform: "win32",
+      commands: { node: "node", git: "git", powershell7: "pwsh", gh: "gh", codex: "codex" },
+    });
+
+    expect(report.tools.find((tool) => tool.name === "node")?.status).toBe(status);
+  });
+
   it("checks versions without invoking credential-bearing auth commands", async () => {
     const calls: Array<{ command: string; args: readonly string[] }> = [];
     const runner: ProcessRunner = async (command, args) => {

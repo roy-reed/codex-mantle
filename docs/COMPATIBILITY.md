@@ -2,7 +2,7 @@
 
 ## Supported surface
 
-The alpha supports Node.js 22+, Git, and local files on Windows, Linux, and macOS. PowerShell 7 is a
+The alpha supports Node.js 22.12+, Git, and local files on Windows, Linux, and macOS. PowerShell 7 is a
 recommended Windows dependency and part of `doctor`; it is not used to parse or rewrite Codex files.
 
 Mantle targets public Codex surfaces:

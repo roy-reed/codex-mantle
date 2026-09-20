@@ -40,7 +40,7 @@ schema 和安装产物只写入显式指定的新建、空目录或 Mantle 自�
 
 ## 从源码开始
 
-需要 Node.js 22+、pnpm 11.x（已验证 11.19.0）、Git；Windows 需要 PowerShell 7。
+需要 Node.js 22.12+、pnpm 10.x（已验证 10.34.5）、Git；Windows 需要 PowerShell 7。
 
 ```powershell
 git clone https://github.com/roy-reed/codex-mantle.git

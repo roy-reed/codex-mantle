@@ -36,6 +36,14 @@ interface ToolDefinition {
   requirement?: string;
 }
 
+function supportsNodeVersion(version: string): boolean {
+  const match = version.match(/^v?(\d+)\.(\d+)(?:\.|$)/u);
+  if (!match) return false;
+  const major = Number(match[1]);
+  const minor = Number(match[2]);
+  return major > 22 || (major === 22 && minor >= 12);
+}
+
 function toolDefinitions(platform: NodeJS.Platform): readonly ToolDefinition[] {
   return [
     {
@@ -43,8 +51,8 @@ function toolDefinitions(platform: NodeJS.Platform): readonly ToolDefinition[] {
       defaultCommand: process.execPath,
       args: ["--version"],
       required: true,
-      validate: (version) => Number(version.match(/v?(\d+)/u)?.[1]) >= 22,
-      requirement: "Node.js 22 or newer is required.",
+      validate: supportsNodeVersion,
+      requirement: "Node.js 22.12 or newer is required.",
     },
     { name: "git", defaultCommand: "git", args: ["--version"], required: true },
     {
