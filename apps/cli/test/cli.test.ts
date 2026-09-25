@@ -2,7 +2,13 @@ import { lstat, mkdtemp, rm } from "node:fs/promises";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it, vi } from "vitest";
-import { formatProfilePlanHuman, formatSnapshotInspectHuman, main, parsePort } from "../src/cli.js";
+import {
+  formatProfilePlanHuman,
+  formatSnapshotInspectHuman,
+  main,
+  openDashboardIfRequested,
+  parsePort,
+} from "../src/cli.js";
 
 interface CapturedMain {
   exitCode: typeof process.exitCode;
@@ -96,6 +102,21 @@ describe.sequential("CLI regressions", () => {
     for (const invalid of ["0", "65536", "1.5", "0x50", "+80", "80oops"]) {
       expect(() => parsePort(invalid)).toThrow("decimal integer from 1 to 65535");
     }
+  });
+
+  it("opens the dashboard only when requested and keeps launch failures non-fatal", async () => {
+    const origin = "http://127.0.0.1:41237";
+    const opener = vi.fn(async (_target: string): Promise<void> => undefined);
+
+    await openDashboardIfRequested(false, origin, opener);
+    expect(opener).not.toHaveBeenCalled();
+
+    await openDashboardIfRequested(true, origin, opener);
+    expect(opener).toHaveBeenCalledOnce();
+    expect(opener).toHaveBeenCalledWith(origin);
+
+    opener.mockRejectedValueOnce(new Error("browser launch failed"));
+    await expect(openDashboardIfRequested(true, origin, opener)).resolves.toBeUndefined();
   });
 
   it("prints each profile target with complete before and after hashes", () => {
