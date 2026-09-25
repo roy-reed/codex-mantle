@@ -33,6 +33,8 @@ import {
 import { Command, CommanderError, InvalidArgumentError, Option } from "commander";
 import open from "open";
 
+type DashboardOpener = (target: string) => Promise<unknown>;
+
 interface GlobalOptions {
   json?: boolean;
 }
@@ -81,6 +83,15 @@ function errorMessage(error: unknown): string {
 
 function displayedHash(hash: string | null): string {
   return hash ?? "(missing)";
+}
+
+export async function openDashboardIfRequested(
+  requested: boolean,
+  origin: string,
+  opener: DashboardOpener = open,
+): Promise<void> {
+  if (!requested) return;
+  await opener(origin).catch(() => undefined);
 }
 
 export function formatProfilePlanHuman(
@@ -568,7 +579,7 @@ export function buildProgram(): Command {
         });
         process.stdout.write(`Codex Mantle ${PRODUCT_VERSION} is listening at ${handle.origin}\n`);
         process.stdout.write("Dashboard APIs are read-only. Press Ctrl+C to stop.\n");
-        if (options.open) await open(handle.origin).catch(() => undefined);
+        await openDashboardIfRequested(options.open, handle.origin);
         await new Promise<void>((done) => {
           const stop = () => void handle.close().finally(done);
           process.once("SIGINT", stop);
