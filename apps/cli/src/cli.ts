@@ -1,14 +1,9 @@
 #!/usr/bin/env node
 
-import { access, lstat, mkdir, readFile, writeFile } from "node:fs/promises";
+import { readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
-import { dirname, isAbsolute, resolve } from "node:path";
-import {
-  generateAppServerSchema,
-  probeCodex,
-  runDoctor,
-  type CodexCapabilityProbe,
-} from "@codex-mantle/codex-adapter";
+import { resolve } from "node:path";
+import { generateAppServerSchema, probeCodex, runDoctor } from "@codex-mantle/codex-adapter";
 import {
   applyPlan,
   buildProfilePlan,
@@ -20,247 +15,40 @@ import {
   PRODUCT_VERSION,
   resolveCodexHome,
   resolveStateDir,
-  sha256,
-  type SnapshotManifest,
   SnapshotStore,
 } from "@codex-mantle/core";
 import { parsePluginManifestJson } from "@codex-mantle/plugin-sdk";
+import { startMantleServer, type SnapshotProviderValue } from "@codex-mantle/server";
+import { Command, CommanderError, Option } from "commander";
 import {
-  startMantleServer,
-  type SnapshotProviderValue,
-  type StatusProviderValue,
-} from "@codex-mantle/server";
-import { Command, CommanderError, InvalidArgumentError, Option } from "commander";
-import open from "open";
+  errorMessage,
+  formatProfilePlanHuman,
+  formatSnapshotInspectHuman,
+  jsonDocument,
+  openDashboardIfRequested,
+  print,
+} from "./output.js";
+import {
+  type CommonCodexOptions,
+  type RootOptions,
+  absolutePath,
+  addRootOptions,
+  codexOptions,
+  collect,
+  doctorCommands,
+  parsePort,
+  resolveAllowedRoots,
+} from "./options.js";
+import {
+  currentHashes,
+  currentHashesDigest,
+  existingWebRoot,
+  probeToStatus,
+  writeJsonExclusive,
+} from "./runtime.js";
 
-type DashboardOpener = (target: string) => Promise<unknown>;
-
-interface GlobalOptions {
-  json?: boolean;
-}
-
-interface CommonCodexOptions {
-  codex?: string;
-}
-
-interface RootOptions {
-  codexHome?: string;
-  root?: string[];
-  workspace?: string;
-}
-
-function collect(value: string, previous: string[] = []): string[] {
-  return [...previous, value];
-}
-
-function absolutePath(value: string, label: string): string {
-  const path = resolve(value);
-  if (!isAbsolute(path)) {
-    throw new Error(`${label} must resolve to an absolute path.`);
-  }
-  return path;
-}
-
-function jsonDocument(value: unknown): string {
-  return `${JSON.stringify(value, null, 2)}\n`;
-}
-
-function globalOptions(command: Command): GlobalOptions {
-  return command.optsWithGlobals<GlobalOptions>();
-}
-
-function print(command: Command, value: unknown, human: () => void): void {
-  if (globalOptions(command).json === true) {
-    process.stdout.write(jsonDocument(value));
-    return;
-  }
-  human();
-}
-
-function errorMessage(error: unknown): string {
-  return error instanceof Error ? error.message : "An unknown error occurred.";
-}
-
-function displayedHash(hash: string | null): string {
-  return hash ?? "(missing)";
-}
-
-export async function openDashboardIfRequested(
-  requested: boolean,
-  origin: string,
-  opener: DashboardOpener = open,
-): Promise<void> {
-  if (!requested) return;
-  await opener(origin).catch(() => undefined);
-}
-
-export function formatProfilePlanHuman(
-  plan: Pick<MutationPlan, "operations">,
-  output: string,
-  approvalId: string,
-): string {
-  const lines = [
-    `Plan: ${output}`,
-    `Changes: ${plan.operations.length}`,
-    `Approval: ${approvalId}`,
-  ];
-  for (const operation of plan.operations) {
-    lines.push(`- ${operation.beforeHash === null ? "CREATE" : "UPDATE"}`);
-    lines.push(`  target: ${operation.target}`);
-    lines.push(`  before: ${displayedHash(operation.beforeHash)}`);
-    lines.push(`  after: ${operation.afterHash}`);
-  }
-  return `${lines.join("\n")}\n`;
-}
-
-export function formatSnapshotInspectHuman(
-  manifest: Pick<SnapshotManifest, "entries" | "id">,
-  hashes: Readonly<Record<string, string | null>>,
-  approvalId: string,
-  hashesDigest: string,
-): string {
-  const lines = [
-    `Snapshot: ${manifest.id}`,
-    `Approval: ${approvalId}`,
-    `Current hashes: ${hashesDigest}`,
-  ];
-  for (const entry of manifest.entries) {
-    lines.push(`- target: ${entry.target}`);
-    lines.push(`  current: ${displayedHash(hashes[entry.target] ?? null)}`);
-    lines.push(`  snapshot: ${displayedHash(entry.sha256)}`);
-  }
-  return `${lines.join("\n")}\n`;
-}
-
-export function parsePort(value: string): number {
-  if (!/^\d+$/u.test(value)) {
-    throw new InvalidArgumentError("port must be a decimal integer from 1 to 65535");
-  }
-  const port = Number(value);
-  if (!Number.isSafeInteger(port) || port < 1 || port > 65_535) {
-    throw new InvalidArgumentError("port must be a decimal integer from 1 to 65535");
-  }
-  return port;
-}
-
-async function writeJsonExclusive(path: string, value: unknown): Promise<void> {
-  await mkdir(dirname(path), { recursive: true });
-  await writeFile(path, jsonDocument(value), { encoding: "utf8", flag: "wx", mode: 0o600 });
-}
-
-function codexOptions(options: CommonCodexOptions): { codexPath?: string } {
-  return options.codex === undefined ? {} : { codexPath: options.codex };
-}
-
-function doctorCommands(options: CommonCodexOptions): { codex: string } | undefined {
-  return options.codex === undefined ? undefined : { codex: options.codex };
-}
-
-function probeToStatus(probe: CodexCapabilityProbe): StatusProviderValue {
-  const compatibility = probe.readOnly
-    ? {
-        state: probe.version === null ? ("unknown" as const) : ("limited" as const),
-        summary: probe.reasons.join(" ") || "Codex is available in read-only mode.",
-      }
-    : {
-        state: "compatible" as const,
-        summary: `Codex ${probe.version?.raw ?? "unknown"} is in the tested compatibility series.`,
-      };
-
-  return {
-    ...(probe.version === null ? {} : { codexVersion: probe.version.raw }),
-    compatibility,
-    capabilities: [
-      {
-        id: "codex-command",
-        label: "Codex command",
-        state: probe.capabilities.command ? "available" : "unavailable",
-      },
-      {
-        id: "app-server",
-        label: "Codex app-server",
-        state: probe.capabilities.appServer ? "available" : "unavailable",
-      },
-      {
-        id: "schema-generation",
-        label: "App-server schema generation",
-        state: probe.capabilities.schemaGeneration ? "available" : "unavailable",
-      },
-      {
-        id: "configuration-mutations",
-        label: "Guarded configuration mutations",
-        state: probe.readOnly ? "degraded" : "available",
-        detail: probe.readOnly
-          ? "Disabled until this Codex series is validated."
-          : "Plan, snapshot, apply and verify are enabled.",
-      },
-    ],
-    warnings: [...probe.reasons],
-  };
-}
-
-function resolveAllowedRoots(options: RootOptions): string[] {
-  const roots = new Set<string>();
-  roots.add(absolutePath(options.codexHome ?? resolveCodexHome(), "Codex home"));
-  if (options.workspace !== undefined) {
-    roots.add(absolutePath(options.workspace, "Workspace root"));
-  }
-  for (const root of options.root ?? []) {
-    roots.add(absolutePath(root, "Allowed root"));
-  }
-  return [...roots];
-}
-
-async function currentHashes(
-  entries: readonly { target: string }[],
-): Promise<Record<string, string | null>> {
-  const result: Record<string, string | null> = {};
-  for (const entry of entries) {
-    try {
-      const metadata = await lstat(entry.target);
-      if (!metadata.isFile()) {
-        throw new Error(`Restore target is not a regular file: ${entry.target}`);
-      }
-      result[entry.target] = sha256(await readFile(entry.target));
-    } catch (error) {
-      if ((error as NodeJS.ErrnoException).code === "ENOENT") {
-        result[entry.target] = null;
-        continue;
-      }
-      throw error;
-    }
-  }
-  return result;
-}
-
-function currentHashesDigest(hashes: Readonly<Record<string, string | null>>): string {
-  const ordered = Object.fromEntries(
-    Object.entries(hashes).sort(([left], [right]) => left.localeCompare(right)),
-  );
-  return sha256(JSON.stringify(ordered));
-}
-
-async function existingWebRoot(explicit: string | undefined): Promise<string | undefined> {
-  const candidate = explicit ?? process.env.CODEX_MANTLE_WEB_ROOT;
-  const fallback = fileURLToPath(new URL("../../web/dist", import.meta.url));
-  const path = resolve(candidate ?? fallback);
-  try {
-    await access(path);
-    return path;
-  } catch {
-    if (candidate !== undefined) {
-      throw new Error(`Web root does not exist: ${path}`);
-    }
-    return undefined;
-  }
-}
-
-function addRootOptions(command: Command): Command {
-  return command
-    .option("--codex-home <path>", "Codex home root (defaults to CODEX_HOME or ~/.codex)")
-    .option("--workspace <path>", "Workspace root containing managed files")
-    .option("--root <path>", "Additional allowed snapshot root; repeatable", collect, []);
-}
+// 保持原有对外导出不变
+export { formatProfilePlanHuman, formatSnapshotInspectHuman, openDashboardIfRequested, parsePort };
 
 export function buildProgram(): Command {
   const program = new Command()
