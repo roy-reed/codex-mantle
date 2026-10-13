@@ -18,7 +18,7 @@
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
-    "diff": "^8.0.2",
+    "diff": "^9.0.0",
     "zod": "^4.6.5"
   },
   "devDependencies": {
