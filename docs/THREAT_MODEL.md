@@ -31,16 +31,16 @@ the installed Codex version are untrusted inputs.
 
 ## Abuse cases and controls
 
-| Abuse case | Control | Verification |
-| --- | --- | --- |
-| Drive-by website calls localhost | Host/Origin checks, no CORS, no v0.1 write endpoints | HTTP security tests |
-| `..` or junction escapes a root | canonical boundary plus ancestor link checks | path fixtures |
-| File changes after preview | SHA-256 precondition | stale-plan test |
-| Partial multi-file failure | verified snapshot and reverse rollback | injected failure test |
-| Malicious profile executes code | strict data schema; payload read as bytes only | unknown-field tests |
-| CLI argument injects a command | `spawn` with `shell: false` | process tests |
-| Unknown Codex release is treated as writable | capability probe defaults to read-only | adapter test |
-| Backup silently corrupts data | payload hash and size verification | round-trip tests |
+| Abuse case                                   | Control                                              | Verification          |
+| -------------------------------------------- | ---------------------------------------------------- | --------------------- |
+| Drive-by website calls localhost             | Host/Origin checks, no CORS, no v0.1 write endpoints | HTTP security tests   |
+| `..` or junction escapes a root              | canonical boundary plus ancestor link checks         | path fixtures         |
+| File changes after preview                   | SHA-256 precondition                                 | stale-plan test       |
+| Partial multi-file failure                   | verified snapshot and reverse rollback               | injected failure test |
+| Malicious profile executes code              | strict data schema; payload read as bytes only       | unknown-field tests   |
+| CLI argument injects a command               | `spawn` with `shell: false`                          | process tests         |
+| Unknown Codex release is treated as writable | capability probe defaults to read-only               | adapter test          |
+| Backup silently corrupts data                | payload hash and size verification                   | round-trip tests      |
 
 ## Known alpha limitations
 

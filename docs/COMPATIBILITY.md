@@ -17,11 +17,11 @@ state. Codex configuration precedence is documented by OpenAI in
 
 ## Compatibility outcomes
 
-| Outcome | Meaning | Profile writes |
-| --- | --- | --- |
-| unknown | Codex cannot be invoked or its version output cannot be parsed | disabled |
-| limited | Codex responds, but its series is untested or a required output contract fails | disabled |
-| compatible | required output contracts pass and the release series is allowlisted | enabled only through the explicit plan/apply workflow |
+| Outcome    | Meaning                                                                        | Profile writes                                        |
+| ---------- | ------------------------------------------------------------------------------ | ----------------------------------------------------- |
+| unknown    | Codex cannot be invoked or its version output cannot be parsed                 | disabled                                              |
+| limited    | Codex responds, but its series is untested or a required output contract fails | disabled                                              |
+| compatible | required output contracts pass and the release series is allowlisted           | enabled only through the explicit plan/apply workflow |
 
 Individual capability signals use `available`, `degraded`, `unavailable`, or `unknown`. Version text is
 recorded as evidence but is never sufficient on its own. Preview and future versions therefore
