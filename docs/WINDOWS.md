@@ -5,7 +5,7 @@
 - Windows 10 or later;
 - PowerShell 7 (`pwsh`), not Windows PowerShell 5.1;
 - Node.js 22.12 or later;
-- pnpm major version 10.
+- pnpm major version 12.
 
 Administrator rights are neither required nor requested. Git is optional for an extracted source archive and is needed only for source-control workflows.
 

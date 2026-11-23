@@ -124,8 +124,8 @@ function Assert-Toolchain {
     }
 
     $pnpmVersion = (& $pnpmPath --version 2>&1 | Out-String).Trim()
-    if ($LASTEXITCODE -ne 0 -or $pnpmVersion -notmatch '^(?<major>\d+)(?:\.|$)' -or [int]$Matches.major -ne 10) {
-        throw "pnpm major version 10 is required; reported version: $pnpmVersion"
+    if ($LASTEXITCODE -ne 0 -or $pnpmVersion -notmatch '^(?<major>\d+)(?:\.|$)' -or [int]$Matches.major -ne 12) {
+        throw "pnpm major version 12 is required; reported version: $pnpmVersion"
     }
 
     return [ordered]@{ Node = $nodePath; Pnpm = $pnpmPath }
