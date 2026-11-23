@@ -262,7 +262,7 @@ try {
     $null = Assert-NoReparseTraversal -Path $versionsRoot
     $null = Assert-NoReparseTraversal -Path $binRoot
 
-    # pnpm 10 creates absolute workspace-package links inside a deployed tree.
+    # pnpm deploy creates absolute workspace-package links inside a deployed tree.
     # Deploy directly to the unique version directory so those links remain
     # valid; the directory is not made active until both launchers are replaced.
     $createdFinalRoot = $true

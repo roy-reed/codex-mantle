@@ -6,7 +6,7 @@ for support and security routing, and [GOVERNANCE.md](GOVERNANCE.md) for decisio
 
 ## Development setup
 
-1. Install Node.js 22.12+ and pnpm 10.x (the repository pins 10.34.9).
+1. Install Node.js 22.12+ and pnpm 12.x (the repository pins 12.21.0).
 2. Run `pnpm install --frozen-lockfile`.
 3. Run `pnpm check` before opening a pull request.
 

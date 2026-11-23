@@ -44,7 +44,7 @@ async function captureMain(args: readonly string[]): Promise<CapturedMain> {
   }
 }
 
-describe.sequential("CLI regressions", () => {
+describe("CLI regressions", () => {
   it("rejects snapshot create without --file before creating the state directory", async () => {
     const testRoot = fileURLToPath(new URL(".", import.meta.url));
     const temporaryRoot = await mkdtemp(join(testRoot, ".tmp-cli-"));
