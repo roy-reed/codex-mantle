@@ -124,8 +124,8 @@ function Assert-Toolchain {
     }
 
     $pnpmVersion = (& $pnpmPath --version 2>&1 | Out-String).Trim()
-    if ($LASTEXITCODE -ne 0 -or $pnpmVersion -notmatch '^(?<major>\d+)(?:\.|$)' -or [int]$Matches.major -ne 10) {
-        throw "pnpm major version 10 is required; reported version: $pnpmVersion"
+    if ($LASTEXITCODE -ne 0 -or $pnpmVersion -notmatch '^(?<major>\d+)(?:\.|$)' -or [int]$Matches.major -ne 12) {
+        throw "pnpm major version 12 is required; reported version: $pnpmVersion"
     }
 
     return [ordered]@{ Node = $nodePath; Pnpm = $pnpmPath }
@@ -262,7 +262,7 @@ try {
     $null = Assert-NoReparseTraversal -Path $versionsRoot
     $null = Assert-NoReparseTraversal -Path $binRoot
 
-    # pnpm 10 creates absolute workspace-package links inside a deployed tree.
+    # pnpm deploy creates absolute workspace-package links inside a deployed tree.
     # Deploy directly to the unique version directory so those links remain
     # valid; the directory is not made active until both launchers are replaced.
     $createdFinalRoot = $true
